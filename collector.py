@@ -119,8 +119,6 @@ if __name__ == '__main__':
     elif len(OPTION_KEYS & args_set) > 0 and len(SESSION_KEYS & args_set) > 0:
         print('Starting data extraction plan for given options')
         arg_iter = iter(args)
-        file_name = next(arg_iter)
-
         first_flag = next(arg_iter)
         options = []
         tags = []
@@ -136,7 +134,7 @@ if __name__ == '__main__':
             except StopIteration:
                 pass
 
-            if SESSION_KEYS.__contains__(option):
+            if option in SESSION_KEYS:
                 session_name = next(arg_iter)
                 option = next(arg_iter)
             if CASE_TAG.__contains__(option):
