@@ -147,9 +147,15 @@ def store_call_logs():
         return
 
     calllogs_cursor = calllogs_conn.cursor()
-    calllogs_query = "select _id, normalized_number, date, duration, type, name, geocoded_location, frequent " \
-                     "from calls order by _id ;"
-    calllogs_cursor.execute(calllogs_query)
+
+    calllogs_query = "select _id, normalized_number, date, duration, type, name, geocoded_location, frequent from calls order by _id ;"
+
+    # ✅ SAFE EXECUTION
+    try:
+        calllogs_cursor.execute(calllogs_query)
+    except Exception as e:
+        print("Skipping call logs (DB structure mismatch):", e)
+        return
 
     CALLLOGS_ID = 0
     CALLLOGS_NUMBER_INDX = 1
@@ -164,55 +170,14 @@ def store_call_logs():
 
     row = calllogs_cursor.fetchone()
     while row:
-
-        id = " "
-        number = " "
-        date = " "
-        duration = " "
-        ctype = " "
-        name = " "
-        location = " "
-        frequent = " "
-
-        if row[CALLLOGS_ID] is not None:
-            id = row[CALLLOGS_ID]
-
-        if row[CALLLOGS_NUMBER_INDX] is not None:
-            number = row[CALLLOGS_NUMBER_INDX]
-            number = str(number)
-
-        if row[CALLLOGS_DATE_INDX] is not None:
-            date = row[CALLLOGS_DATE_INDX]
-            # date = int(date)
-
-        if row[CALLLOGS_DURATION_INDX] is not None:
-            duration = row[CALLLOGS_DURATION_INDX]
-            duration = str(duration)
-
-        if row[CALLLOGS_TYPE_INDX] is not None:
-            if row[CALLLOGS_TYPE_INDX] == 1:
-                ctype = '1'
-            if row[CALLLOGS_TYPE_INDX] == 2:
-                ctype = '2'
-            if row[CALLLOGS_TYPE_INDX] == 3:
-                ctype = '3'
-            if row[CALLLOGS_TYPE_INDX] == 5:
-                ctype = '5'
-            if row[CALLLOGS_TYPE_INDX] == 1000:
-                ctype = '1000'
-            if row[CALLLOGS_TYPE_INDX] == 1001:
-                ctype = '1001'
-            if row[CALLLOGS_TYPE_INDX] == 1002:
-                ctype = '1002'
-
-        if row[CALLLOGS_NAME_INDX] is not None:
-            name = row[CALLLOGS_NAME_INDX]
-
-        if row[CALLLOGS_LOCATION_INDX] is not None:
-            location = row[CALLLOGS_LOCATION_INDX]
-
-        if row[CALLLOGS_FREQUENT] is not None:
-            frequent = str(row[CALLLOGS_FREQUENT])
+        id = row[CALLLOGS_ID] or ""
+        number = str(row[CALLLOGS_NUMBER_INDX] or "")
+        date = row[CALLLOGS_DATE_INDX] or 0
+        duration = str(row[CALLLOGS_DURATION_INDX] or "")
+        ctype = str(row[CALLLOGS_TYPE_INDX] or "")
+        name = row[CALLLOGS_NAME_INDX] or ""
+        location = row[CALLLOGS_LOCATION_INDX] or ""
+        frequent = str(row[CALLLOGS_FREQUENT] or "")
 
         calllogs_dict[row[0]] = (id, number, date, duration, ctype, name, location, frequent)
         row = calllogs_cursor.fetchone()
@@ -220,30 +185,30 @@ def store_call_logs():
     calllogs_cursor.close()
     calllogs_conn.close()
 
-    
-
     calllogs_output_file = OUTPUT + SEP + "phone_calllogs.tsv"
-
     calllogs_file = open(calllogs_output_file, "w+", encoding="utf-8")
+
     calllogs_file.write("id\tnumber\tname\tdate\tduration\ttype\tlocation\tfrequent\n")
 
     for value in calllogs_dict:
-
         if calllogs_dict[value][CALLLOGS_DATE_INDX] > 0:
-            datetimestr = datetime.datetime.fromtimestamp(calllogs_dict[value][CALLLOGS_DATE_INDX] / 1000)\
-                .strftime('%Y-%m-%dT%H:%M:%S')
+            datetimestr = datetime.datetime.fromtimestamp(
+                calllogs_dict[value][CALLLOGS_DATE_INDX] / 1000
+            ).strftime('%Y-%m-%dT%H:%M:%S')
         else:
             datetimestr = str(calllogs_dict[value][CALLLOGS_DATE_INDX])
 
-        calllogs_file.write(str(calllogs_dict[value][CALLLOGS_ID]) +
-                            "\t" + str(calllogs_dict[value][CALLLOGS_NUMBER_INDX]) +
-                            "\t" + str(calllogs_dict[value][CALLLOGS_NAME_INDX]) +
-                            "\t" + datetimestr +
-                            "\t" + str(calllogs_dict[value][CALLLOGS_DURATION_INDX]) +
-                            "\t" + str(calllogs_dict[value][CALLLOGS_TYPE_INDX]) +
-                            "\t" + str(calllogs_dict[value][CALLLOGS_LOCATION_INDX]) + 
-                            "\t"+ str(calllogs_dict[value][CALLLOGS_FREQUENT]) + "\n"
-                            )
+        calllogs_file.write(
+            str(calllogs_dict[value][CALLLOGS_ID]) + "\t" +
+            str(calllogs_dict[value][CALLLOGS_NUMBER_INDX]) + "\t" +
+            str(calllogs_dict[value][CALLLOGS_NAME_INDX]) + "\t" +
+            datetimestr + "\t" +
+            str(calllogs_dict[value][CALLLOGS_DURATION_INDX]) + "\t" +
+            str(calllogs_dict[value][CALLLOGS_TYPE_INDX]) + "\t" +
+            str(calllogs_dict[value][CALLLOGS_LOCATION_INDX]) + "\t" +
+            str(calllogs_dict[value][CALLLOGS_FREQUENT]) + "\n"
+        )
+
     print("\n" + str(len(calllogs_dict.values())) + " call logs were processed")
 
 
