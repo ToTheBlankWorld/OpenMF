@@ -94,7 +94,6 @@ def collect_data(extract_options, session_name, tags):
     print(REPORT)
 
 
-
 def save_report(session_name, tags):
     db_store_path = ROOT_DIR + SEP + 'data' + SEP + session_name
     file_path = db_store_path + SEP + 'report' + SEP + 'report.txt'
