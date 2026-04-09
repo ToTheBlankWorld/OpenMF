@@ -105,58 +105,70 @@ def save_report(session_name, tags):
 
 if __name__ == '__main__':
     args = sys.argv[1:]
-    args_set = set(args)
-    print(HELP_KEYS)
-    if HELP_KEYS & args_set:
+
+    options = []
+    session_name = ''
+    tags = []
+
+    # 🔍 Handle help
+    if any(arg in ["-h","--help"] for arg in args):
         print(help_str)
         sys.exit()
-    elif REPORT_GEN_KEYS & args_set:
-        session_name = args[2]
-        if generate_pdf_report(session_name):
-            print('Generated report as a PDF successfully for case :: ' + session_name)
-        else:
-            print('Unable to generate PDF report for case :: ' + session_name)
-    elif len(OPTION_KEYS & args_set) > 0 and len(SESSION_KEYS & args_set) > 0:
-        print('Starting data extraction plan for given options')
-        arg_iter = iter(args)
-        first_flag = next(arg_iter)
-        options = []
-        tags = []
-        session_name = ''
-        if OPTION_KEYS.__contains__(first_flag):
-            print('Running data extraction for selected options : ')
-            options = []
-            while True:
-                try:
-                    option = next(arg_iter)
-                    if option.startswith('-'):
-                        break
-                    options.append(option)
-                except StopIteration:
-                    break
 
+    # 📄 Handle report generation
+    if any(arg in ["-rp","--report"] for arg in args):
+        try:
+            idx = next(i for i,v in enumerate(args) if v in ["-rp","--report"])
+            session_name = args[idx+1]
+            if generate_pdf_report(session_name):
+                print("Generated report successfully")
+            else:
+                print("Failed to generate report")
+        except:
+            print("Invalid report command")
+        sys.exit()
 
-            if option in SESSION_KEYS:
-                session_name = next(arg_iter)
-                option = next(arg_iter)
-            if CASE_TAG.__contains__(option):
-                tags.extend(next(arg_iter).split(','))
-        else:
-            print('Incorrectly options are provided, correct way is : ')
-            print('collector.py -o facebook whatsapp phone -sn case_007_james-bond')
-            sys.exit()
-        if 'all' in options:
-            options = list(FUNC_MAP.keys())
-            print('Extracting all common databases ...')
-            extract_all_data(session_name)
-            print('databases extraction completed...')
-        else:
-            collect_data(options, session_name, tags)
-        if save_report(session_name, tags):
-            print('Saved report successfully')
-        else:
-            print('Unable to save report file')
+    # 🔧 Parse arguments safely
+    i = 0
+    while i < len(args):
+        if args[i] in ["-o","--option"]:
+            i += 1
+            while i < len(args) and not args[i].startswith("-"):
+                options.append(args[i])
+                i += 1
+            continue
+
+        elif args[i] in ["-sn","--session_name"]:
+            if i+1 < len(args):
+                session_name = args[i+1]
+                i += 2
+                continue
+
+        elif args[i] == "--tag":
+            if i+1 < len(args):
+                tags.extend(args[i+1].split(','))
+                i += 2
+                continue
+
+        i += 1
+
+    # ❌ Validate input
+    if not options or not session_name:
+        print("Invalid / Missing arguments\n")
+        print(help_str)
+        sys.exit()
+
+    print("Starting data extraction...")
+
+    # 🔥 Handle "all"
+    if 'all' in options:
+        options = list(FUNC_MAP.keys())
+
+    # 🚀 Run extraction
+    collect_data(options, session_name, tags)
+
+    # 💾 Save report
+    if save_report(session_name, tags):
+        print("Report saved successfully")
     else:
-        print('Invalid / Not Sufficient options provided')
-        print(help_str)
-        sys.exit()
+        print("Failed to save report")
