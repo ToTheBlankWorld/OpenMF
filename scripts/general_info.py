@@ -31,6 +31,9 @@ else:
 BUILDPROP = Popen([ADB, 'shell', SUC, 'cat', '/system/build.prop'], stdout=PIPE, stderr=STDOUT).stdout.read().decode(
     'UTF-8')
 # Manufacturer & Model
+import os
+DEVICE_MODEL = os.popen("adb shell getprop ro.product.model").read().strip()
+DEVICE_MANUF = os.popen("adb shell getprop ro.product.manufacturer").read().strip()
 for manuf in BUILDPROP.split('\n'):
     if 'ro.product.manufacturer' in manuf:
         DEVICE_MANUF = manuf.strip().split('=')[1]

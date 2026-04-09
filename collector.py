@@ -104,7 +104,7 @@ def save_report(session_name, tags):
 
 
 if __name__ == '__main__':
-    args = sys.argv
+    args = sys.argv[1:]
     args_set = set(args)
     print(HELP_KEYS)
     if HELP_KEYS & args_set:
@@ -128,10 +128,13 @@ if __name__ == '__main__':
         if OPTION_KEYS.__contains__(first_flag):
             print('Running data extraction for selected options : ')
             option = ''
-            while not option.__contains__('-'):
-                if option != '':
-                    options.append(option)
-                option = next(arg_iter)
+            try:
+                while not option.__contains__('-'):
+                    if option != '':
+                        options.append(option)
+                    option = next(arg_iter)
+            except StopIteration:
+                pass
 
             if SESSION_KEYS.__contains__(option):
                 session_name = next(arg_iter)
@@ -142,7 +145,8 @@ if __name__ == '__main__':
             print('Incorrectly options are provided, correct way is : ')
             print('collector.py -o facebook whatsapp phone -sn case_007_james-bond')
             sys.exit()
-        if options.__contains__('all'):
+        if 'all' in options:
+            options = list(FUNC_MAP.keys())
             print('Extracting all common databases ...')
             extract_all_data(session_name)
             print('databases extraction completed...')
