@@ -125,14 +125,16 @@ if __name__ == '__main__':
         session_name = ''
         if OPTION_KEYS.__contains__(first_flag):
             print('Running data extraction for selected options : ')
-            option = ''
-            try:
-                while not option.__contains__('-'):
-                    if option != '':
-                        options.append(option)
+            options = []
+            while True:
+                try:
                     option = next(arg_iter)
-            except StopIteration:
-                pass
+                    if option.startswith('-'):
+                        break
+                    options.append(option)
+                except StopIteration:
+                    break
+
 
             if option in SESSION_KEYS:
                 session_name = next(arg_iter)
